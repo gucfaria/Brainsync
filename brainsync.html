@@ -536,6 +536,15 @@ function makeNoiseBuffer(ctx, type) {
 // ── AUDIO INIT ─────────────────────────────────────────
 function initAudio() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // iOS silent mode bypass — toca buffer silencioso imediatamente no gesto do usuário
+  // Isso faz o iOS tratar o contexto como "iniciado por interação" e ignorar o silencioso
+  const silentBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+  const silentSrc = audioCtx.createBufferSource();
+  silentSrc.buffer = silentBuf;
+  silentSrc.connect(audioCtx.destination);
+  silentSrc.start(0);
+
   const freq  = currentFreq;
   const vol   = document.getElementById('audio-slider').value / 100;
   const depth = document.getElementById('am-slider').value / 100;
