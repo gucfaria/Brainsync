@@ -235,7 +235,7 @@
 
 </svg>
 
-    <div class="freq-display" id="freq-display">40</div>
+    <div class="freq-display" id="freq-display" style="margin-top:-60px">40</div>
     <div class="freq-band" id="freq-band">HERTZ · GAMMA</div>
   </div>
 
@@ -395,6 +395,8 @@ const FLICKER_COLORS = {
 };
 
 let audioCtx = null;
+let wakeLock = null;
+let vibrateTimer = null;
 let masterGain = null;
 let noiseSource = null;
 let amOsc = null;
@@ -617,6 +619,16 @@ function stopAudio() {
 
 // ── FLICKER ────────────────────────────────────────────
 function startFlicker() {
+  // Vibração sincronizada (Android only — iOS não suporta)
+  if ('vibrate' in navigator && currentFreq <= 20) {
+    // Acima de ~20Hz motores de vibração não conseguem acompanhar
+    const halfMs = Math.round(500 / currentFreq);
+    const pattern = Array(Math.round(currentFreq * 4)).fill(halfMs); // ~4 segundos
+    const repeatVibration = () => {
+      if (isRunning) { navigator.vibrate(pattern); vibrateTimer = setTimeout(repeatVibration, halfMs * pattern.length); }
+    };
+    repeatVibration();
+  }
   if (!currentFlicker) return; // audio-only mode
   const overlay = document.getElementById('flicker');
   const intensity = document.getElementById('light-slider').value / 100;
@@ -645,6 +657,8 @@ function startFlicker() {
 function stopFlicker() {
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   document.getElementById('flicker').style.opacity = 0;
+  if ('vibrate' in navigator) navigator.vibrate(0); // para vibração
+  if (vibrateTimer) { clearTimeout(vibrateTimer); vibrateTimer = null; }
 }
 
 // ── SESSION ────────────────────────────────────────────
@@ -656,6 +670,10 @@ function startSession() {
   isRunning = true;
   timeRemaining = sessionDuration;
   updateRing(1);
+  // Wake Lock — mantém tela ativa
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(wl => { wakeLock = wl; }).catch(() => {});
+  }
 
   const band = getBand(currentFreq);
   const noiseLabel = {white:'BRANCO', pink:'ROSA', brown:'MARROM'}[currentNoise];
@@ -690,6 +708,8 @@ function stopSession() {
   clearInterval(timerInterval);
   stopFlicker();
   stopAudio();
+  // Libera Wake Lock
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
 
   document.getElementById('fs-overlay').classList.remove('active');
   document.getElementById('btn-main').classList.remove('running');
