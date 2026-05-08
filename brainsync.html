@@ -372,6 +372,9 @@
   <div class="fs-freq" id="fs-freq-label">40 HZ · GAMMA</div>
   <div class="fs-timer" id="fs-timer">05:00</div>
   <div class="fs-mode" id="fs-mode-label">AM · BRANCO</div>
+  <div id="silent-warning" style="display:none; font-family:'Share Tech Mono',monospace; font-size:10px; color:rgba(255,107,53,0.8); letter-spacing:2px; text-align:center; padding:0 24px; margin-top:4px;">
+    ⚠ iOS: DESATIVE O MODO SILENCIOSO PARA ÁUDIO
+  </div>
   <button class="btn-stop-fs" onclick="stopSession()">ENCERRAR</button>
 </div>
 
@@ -537,13 +540,25 @@ function makeNoiseBuffer(ctx, type) {
 function initAudio() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  // iOS silent mode bypass — toca buffer silencioso imediatamente no gesto do usuário
-  // Isso faz o iOS tratar o contexto como "iniciado por interação" e ignorar o silencioso
+  // iOS silent mode bypass
   const silentBuf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
   const silentSrc = audioCtx.createBufferSource();
   silentSrc.buffer = silentBuf;
   silentSrc.connect(audioCtx.destination);
   silentSrc.start(0);
+
+  // Detecção de modo silencioso iOS
+  // O AudioContext fica em 'suspended' se o iOS bloquear o áudio
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    setTimeout(() => {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        document.getElementById('silent-warning').style.display = 'block';
+      } else {
+        document.getElementById('silent-warning').style.display = 'none';
+      }
+    }, 800); // aguarda 800ms para o contexto estabilizar
+  }
 
   const freq  = currentFreq;
   const vol   = document.getElementById('audio-slider').value / 100;
@@ -721,6 +736,7 @@ function stopSession() {
   if (wakeLock) { wakeLock.release(); wakeLock = null; }
 
   document.getElementById('fs-overlay').classList.remove('active');
+  document.getElementById('silent-warning').style.display = 'none';
   document.getElementById('btn-main').classList.remove('running');
   document.getElementById('btn-main').textContent = 'INICIAR';
 
