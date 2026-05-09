@@ -1,4 +1,4 @@
-const CACHE = 'brainsync-v6';
+const CACHE = 'brainsync-v7';
 const ASSETS = [
   './brainsync.html',
   './manifest.json',

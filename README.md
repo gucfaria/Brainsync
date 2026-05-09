@@ -57,5 +57,3 @@ Binaural mode requires headphones. Use in a dim environment.
 MIT — personal and clinical use permitted.
 
 ---
-
-*Built as a lightweight replacement for Brain.fm / Lumenate for personal neurofeedback research.*
