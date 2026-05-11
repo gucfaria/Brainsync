@@ -1,8 +1,8 @@
 {
-  "name": "BrainSync",
-  "short_name": "BrainSync",
+  "name": "EntrainMind",
+  "short_name": "EntrainMind",
   "description": "Multimodal neural entrainment: photic flicker + AM noise + binaural beats",
-  "start_url": "./brainsync.html",
+  "start_url": "./entrainmind.html",
   "display": "standalone",
   "background_color": "#040a04",
   "theme_color": "#040a04",
